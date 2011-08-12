@@ -2,17 +2,17 @@
  * FileHelperEngine.java
  *
  * Copyright (C) 2007 Felipe*Coury@gmail.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -22,6 +22,7 @@ package org.coury.jfilehelpers.engines;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
     private String completeLine;
     private FileReader fr = null;
     private ForwardReader freader = null;
-    
+
     private BeforeReadRecordHandler<T> beforeReadRecordHandler;
     private AfterReadRecordHandler<T> afterReadRecordHandler;
     private BeforeWriteRecordHandler<T> beforeWriteRecordHandler;
@@ -88,7 +89,7 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
             }
         }
     }
-    
+
     public String getRecordsAsString(List<T> records) throws IOException {
     	StringWriter sw = new StringWriter();
     	writeStream(sw, records, -1);
@@ -178,7 +179,7 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
             writer.flush();
         }
     }
-    
+
     public List<T> readFile(String fileName, int maxRecords) throws IOException {
         List<T> tempRes = null;
         Reader r = null;
@@ -201,7 +202,7 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
         List<T> tempRes = null;
         Reader r = null;
         try {
-            r = new InputStreamReader(getClass().getResourceAsStream(fileName));
+            r = new InputStreamReader(new FileInputStream(new File(fileName)));
             tempRes = readStream(r, maxRecords);
         } finally {
             if (r != null) {
@@ -218,7 +219,9 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
             list = new ArrayList<T>();
             openStream(fileReader, maxRecords);
             for (T t : this) {
-                list.add(t);
+            	if(t != null){
+            		list.add(t);
+            	}
             }
         } catch (IOException e) {
             throw e;
@@ -231,12 +234,12 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
     public void openFile(String fileName) throws IOException {
         openFile(fileName, Integer.MAX_VALUE);
     }
-    
+
     public void openFile(String fileName, int maxRecords) throws IOException {
         fr = new FileReader(new File(fileName));
         openStream(fr, maxRecords);
     }
-    
+
     public void openResource(String resourceName) throws IOException {
         openResource(resourceName, Integer.MAX_VALUE);
     }
@@ -246,7 +249,7 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
         r = new InputStreamReader(getClass().getResourceAsStream(fileName));
         openStream(r, maxRecords);
     }
-    
+
     public void openStream(Reader fileReader, int maxRecords) throws IOException {
         BufferedReader reader = new BufferedReader(fileReader);
         resetFields();
@@ -281,13 +284,13 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
         line = new LineInfo(currentLine);
         line.setReader(freader);
     }
-    
+
     public void close() throws IOException {
         if (fr != null) {
             fr.close();
         }
     }
-    
+
     public void setBeforeReadRecordHandler(BeforeReadRecordHandler<T> beforeReadRecordHandler) {
         this.beforeReadRecordHandler = beforeReadRecordHandler;
     }
@@ -377,6 +380,9 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
 		                if (!skip) {
 		                    record = recordInfo.strToRecord(line);
 		                    skip = onAfterReadRecord(currentLine, record);
+		                    if(skip){
+		                    	record = null;
+		                    }
 		                }
 		                currentLine = freader.readNextLine();
 		                completeLine = currentLine;
@@ -392,8 +398,8 @@ public class FileHelperEngine<T> extends EngineBase<T> implements Iterable<T> {
 			public void remove() {
 		        throw new UnsupportedOperationException("Not supported yet.");
 			}
-        	
+
         };
     }
-    
+
 }

@@ -2,17 +2,17 @@
  * MasterDetailEngine.java
  *
  * Copyright (C) 2007 Felipe*Coury@gmail.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -40,7 +41,7 @@ import org.coury.jfilehelpers.helpers.StringHelper;
 
 /**
  * Handles flat files with master-detail information
- * 
+ *
  * @author Felipe*Coury@gmail.com>
  *
  * @param <MT> Master Type
@@ -59,28 +60,29 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 		this.masterInfo = new RecordInfo<MT>(masterRecordClass);
 		this.recordSelector = recordSelector;
 	}
-	
+
 	public MasterDetailEngine(Class<MT> masterRecordClass, Class<DT> detailRecordClass, CommonSelector action, String selector) {
 		super(detailRecordClass);
 		this.masterInfo = new RecordInfo<MT>(masterRecordClass);
 		final CommonInternalSelector sel = new CommonInternalSelector(action, selector, masterInfo.isIgnoreEmptyLines() || recordInfo.isIgnoreEmptyLines());
-		
+
 		this.recordSelector = new MasterDetailSelector() {
 
 			@Override
 			public RecordAction getRecordAction(String recordString) {
-				return sel.getCommonSelectorMethod(recordString);			
+				return sel.getCommonSelectorMethod(recordString);
 			}
-			
+
 		};
 	}
-	
+
 	public List<MasterDetails<MT, DT>> readResource(String fileName) throws IOException {
-		List<MasterDetails<MT, DT>> tempRes = null;		
-		
+		List<MasterDetails<MT, DT>> tempRes = null;
+
 		InputStreamReader fr = null;
 		try {
-			fr = new InputStreamReader(getClass().getResourceAsStream(fileName));
+			File file = new File(fileName);
+			fr = new InputStreamReader(new FileInputStream(new File(fileName)));
 			tempRes = readStream(fr);
 		}
 		finally {
@@ -88,17 +90,17 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 				fr.close();
 			}
 		}
-		
+
 		return tempRes;
 	}
-	
+
 	public List<MasterDetails<MT, DT>> fromString(String s) throws IOException {
 		return readStream(new InputStreamReader(new ByteArrayInputStream(s.getBytes())));
 	}
-	
+
 	public List<MasterDetails<MT, DT>> readFile(String fileName) throws IOException {
 		List<MasterDetails<MT, DT>> tempRes = null;
-		
+
 		FileReader fr = null;
 		try {
 			fr = new FileReader(new File(fileName));
@@ -109,21 +111,21 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 				fr.close();
 			}
 		}
-		
+
 		return tempRes;
 	}
 
 	public void writeFile(String fileName, MasterDetails<MT, DT> record) throws IOException {
 		List<MasterDetails<MT, DT>> list = new ArrayList<MasterDetails<MT, DT>>();
 		list.add(record);
-		
+
 		writeFile(fileName, list);
 	}
 
 	public void writeFile(String fileName, List<MasterDetails<MT, DT>> records) throws IOException {
 		writeFile(fileName, records, -1);
 	}
-	
+
 	public void writeFile(String fileName, List<MasterDetails<MT, DT>> records, int maxRecords) throws IOException {
 		FileWriter fw = null;
 		try {
@@ -138,10 +140,10 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 			}
 		}
 	}
-	
+
 	private void writeStream(OutputStreamWriter osr, List<MasterDetails<MT, DT>> records, int maxRecords) throws IOException {
 		BufferedWriter writer = new BufferedWriter(osr);
-		
+
 		resetFields();
 		if (getHeaderText() != null && getHeaderText().length() != 0) {
 			writer.write(getHeaderText());
@@ -165,13 +167,13 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 				if (records.get(i) == null) {
 					throw new IllegalArgumentException("The record at index " + i + " is null.");
 				}
-				
+
 				ProgressHelper.notify(notifyHandler, progressMode, i+1, max);
 
 				currentLine = masterInfo.recordToStr(records.get(i).getMaster());
 				writer.write(currentLine + StringHelper.NEW_LINE);
 
-				if (records.get(i).getDetails() != null) { 
+				if (records.get(i).getDetails() != null) {
 					for (int d = 0; d < records.get(i).getDetails().size(); d++) {
 						currentLine = recordInfo.recordToStr(records.get(i).getDetails().get(d));
 						writer.write(currentLine + StringHelper.NEW_LINE);
@@ -208,18 +210,18 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 			if (!getFooterText().endsWith(StringHelper.NEW_LINE)) {
 				writer.write(StringHelper.NEW_LINE);
 			}
-		}		
+		}
 	}
-		
+
 	private List<MasterDetails<MT, DT>> readStream(InputStreamReader fileReader) throws IOException {
 		BufferedReader reader = new BufferedReader(fileReader);
 
 		resetFields();
 		setHeaderText("");
 		setFooterText("");
-		
+
 		List<MasterDetails<MT,DT>> resArray = new ArrayList<MasterDetails<MT,DT>>();
-		
+
 		ForwardReader freader = new ForwardReader(reader, masterInfo.getIgnoreLast());
 		freader.setDiscardForward(true);
 
@@ -231,7 +233,7 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 		currentLine = completeLine;
 
 		ProgressHelper.notify(notifyHandler, progressMode, 0, -1);
-		
+
 		int currentRecord = 0;
 
 		if (masterInfo.getIgnoreFirst() > 0) {
@@ -244,25 +246,25 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 
 		boolean byPass = false;
 		MasterDetails<MT,DT> record = null;
-		
+
 		List<DT> tmpDetails = new ArrayList<DT>();
 
 		LineInfo line = new LineInfo(currentLine);
 		line.setReader(freader);
-		
+
 		while (currentLine != null) {
 			try
 			{
-				currentRecord++; 
+				currentRecord++;
 
 				line.reload(currentLine);
-				
+
 				ProgressHelper.notify(notifyHandler, progressMode, currentRecord, -1);
 
 				RecordAction action = recordSelector.getRecordAction(currentLine);
 				switch (action) {
 					case Master:
-						if (record != null) {							
+						if (record != null) {
 							record.addDetails(tmpDetails);
 							resArray.add(record);
 						}
@@ -270,7 +272,7 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 						totalRecords++;
 						record = new MasterDetails<MT, DT>();
 						tmpDetails.clear();
-						
+
 						MT lastMaster = masterInfo.strToRecord(line);
 
 						if (lastMaster != null) {
@@ -332,21 +334,21 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 			footerText = freader.getRemainingText();
 		}
 
-		return resArray;		
+		return resArray;
 	}
 
 	class CommonInternalSelector {
-		
+
 		private final String selector;
 		private final boolean ignoreEmpty;
 		private final CommonSelector action;
-		
+
 		public CommonInternalSelector(CommonSelector action, String selector, boolean ignoreEmpty) {
 			this.action = action;
 			this.selector = selector;
 			this.ignoreEmpty = ignoreEmpty;
 		}
-		
+
 		protected RecordAction getCommonSelectorMethod(String recordString) {
 			if (ignoreEmpty && recordString.length() < 1) {
 				return RecordAction.Skip;
@@ -370,7 +372,7 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 					return RecordAction.Detail;
 				else
 					return RecordAction.Master;
-			
+
 			case MasterIfBegins:
 				if (recordString.startsWith(selector))
 					return RecordAction.Master;
@@ -404,6 +406,6 @@ public class MasterDetailEngine<MT, DT> extends EngineBase<DT> {
 
 			return RecordAction.Skip;
 		}
-		
+
 	}
 }

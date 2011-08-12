@@ -2,17 +2,17 @@
  * DelimitedField.java
  *
  * Copyright (C) 2007 Felipe*Coury@gmail.com>
- * 
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
@@ -31,15 +31,22 @@ import org.coury.jfilehelpers.enums.TrimMode;
 import org.coury.jfilehelpers.helpers.StringHelper;
 
 public class DelimitedField extends FieldBase {
-	
+
 	private String separator;
 	private char quoteChar = '\0';
 	private QuoteMode quoteMode;
 	private MultilineMode quoteMultiline = MultilineMode.AllowForBoth;
-	
+
 	public DelimitedField(Field fi, String sep) {
 		super(fi);
 		this.separator = sep;
+	}
+
+	public DelimitedField(Field fi, String sep, QuoteMode quoteMode, char quoteChar) {
+		super(fi);
+		this.separator = sep;
+		this.quoteChar = quoteChar;
+		this.quoteMode = quoteMode;
 	}
 
 	@Override
@@ -47,14 +54,14 @@ public class DelimitedField extends FieldBase {
 		if (isOptional() && line.isEol()) {
 			return ExtractedInfo.Empty;
 		}
-		
+
 		if (isLast()) {
 			charsToDiscard = 0;
 		}
 		else {
-			charsToDiscard = separator.length(); 
+			charsToDiscard = separator.length();
 		}
-		
+
 		if (quoteChar == '\0') {
 			return basicExtractString(line);
 		}
@@ -79,15 +86,15 @@ public class DelimitedField extends FieldBase {
 				}
 				else if (line.startsWithTrim(quotedStr)) {
 					throw new IllegalArgumentException(
-							"The field '" + this.getFieldInfo().getName() + 
-							"' has spaces before the QuotedChar at line " + line.getLineNumber() + 
-							". Use the TrimAttribute to by pass this error. Field String: " + 
+							"The field '" + this.getFieldInfo().getName() +
+							"' has spaces before the QuotedChar at line " + line.getLineNumber() +
+							". Use the TrimAttribute to by pass this error. Field String: " +
 							line.getCurrentString());
 				}
 				else
 					throw new IllegalArgumentException(
-							"The field '" + this.getFieldInfo().getName() + 
-							"' not begin with the QuotedChar at line "+ 
+							"The field '" + this.getFieldInfo().getName() +
+							"' not begin with the QuotedChar at line "+
 							line.getLineNumber() + ". " +
 							"You can use @FieldQuoted(quoteMode=QuoteMode.OptionalForRead) " +
 							"to allow optional quoted field.. " +
@@ -99,7 +106,7 @@ public class DelimitedField extends FieldBase {
 
 	private ExtractedInfo basicExtractString(LineInfo line) {
 		ExtractedInfo res;
-		
+
 		if (isLast())
 			res = new ExtractedInfo(line);
 		else {
@@ -112,16 +119,16 @@ public class DelimitedField extends FieldBase {
 					String msg = null;
 
 					if (isFirst() && line.isEmptyFromPos())
-						msg = 
-							"The line " + line.getLineNumber() + 
+						msg =
+							"The line " + line.getLineNumber() +
 							" is empty. Maybe you need to use the annotation " +
 							"[@IgnoreEmptyLines] in your record class.";
 					else
-						msg = 
+						msg =
 							"The delimiter '" + this.separator + "' " +
-							"can't be found after the field '" + 
-							this.getFieldInfo().getName() + "' at line " + 
-							line.getLineNumber() + 
+							"can't be found after the field '" +
+							this.getFieldInfo().getName() + "' at line " +
+							line.getLineNumber() +
 							" (the record has less fields, the delimiter " +
 							"is wrong or the next field must be marked " +
 							"as optional).";
@@ -143,30 +150,30 @@ public class DelimitedField extends FieldBase {
 	protected void createFieldString(StringBuffer sb, Object fieldValue) {
 		String field = super.baseFieldString(fieldValue);
 
-		boolean hasNewLine = 
+		boolean hasNewLine =
 			field.indexOf(StringHelper.NEW_LINE) >= 0;
 
 		// If have a new line and this is not allowed throw an exception
 		if (hasNewLine &&
-			(quoteMultiline == MultilineMode.AllowForRead || 
+			(quoteMultiline == MultilineMode.AllowForRead ||
 			 quoteMultiline == MultilineMode.NotAllow)) {
 
 			throw new IllegalArgumentException(
-					"One value for the field " + this.getFieldInfo().getName() + 
+					"One value for the field " + this.getFieldInfo().getName() +
 					" has a new line inside. To allow write this value you must " +
-					"add a FieldQuoted attribute with the multiline option in true.");			
+					"add a FieldQuoted attribute with the multiline option in true.");
 
 		}
 
 		// Add Quotes If:
 		//     -  optional == false
-		//     -  is optional and contains the separator 
+		//     -  is optional and contains the separator
 		//     -  is optional and contains a new line
 
-		if ((quoteChar != '\0') && 
-			(quoteMode == QuoteMode.AlwaysQuoted || 
-				quoteMode == QuoteMode.OptionalForRead || 
-				( (quoteMode == QuoteMode.OptionalForWrite || quoteMode == QuoteMode.OptionalForBoth)  
+		if ((quoteChar != '\0') &&
+			(quoteMode == QuoteMode.AlwaysQuoted ||
+				quoteMode == QuoteMode.OptionalForRead ||
+				( (quoteMode == QuoteMode.OptionalForWrite || quoteMode == QuoteMode.OptionalForBoth)
 				&& field.indexOf(separator) >= 0) || hasNewLine)) {
 			StringHelper.createQuotedString(sb, field, quoteChar);
 		}
@@ -176,7 +183,7 @@ public class DelimitedField extends FieldBase {
 
 		if (!isLast()) {
 			sb.append(separator);
-		}			
+		}
 	}
 
 	public String getSeparator() {

@@ -10,7 +10,7 @@
   <name>jfilehelpers</name>
   <url>http://maven.apache.org</url>
   <build>
-  <finalName>jfilehelpers</finalName>
+  <finalName>jFileHelpers-1.0</finalName>
    <plugins>
 	<plugin>
  	<groupId>org.apache.maven.plugins</groupId>
