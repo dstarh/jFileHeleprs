@@ -4,13 +4,13 @@
 
   <groupId>org.coury.jfilehelpers</groupId>
   <artifactId>jfilehelpers</artifactId>
-  <version>1.0</version>
+  <version>1.0.1</version>
   <packaging>jar</packaging>
 
   <name>jfilehelpers</name>
   <url>http://maven.apache.org</url>
   <build>
-  <finalName>jFileHelpers-1.0</finalName>
+  <finalName>jFileHelpers-1.0.1</finalName>
    <plugins>
 	<plugin>
  	<groupId>org.apache.maven.plugins</groupId>
